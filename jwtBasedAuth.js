@@ -9,6 +9,13 @@ app.post("/signup", function (req, res) {
   const username = req.body.username;
   const password = req.body.password;
 
+  if (users.find((u) => {
+      users.username === username;
+    })
+  ) {
+    return;
+  }
+
   users.push({
     username: username,
     password: password,
@@ -24,7 +31,7 @@ app.post("/signin", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
-  //this logic is to find the user
+  //this logic is to find the user has signedup?
   let isUser = null;
   for (let i = 0; i < users.length; i++) {
     if (users[i].username === username && users[i].password === password) {
@@ -50,7 +57,7 @@ app.post("/signin", (req, res) => {
     );
     res.json({
       token: token,
-    }); 
+    });
   } else {
     res.status(403).json({
       msg: "Invalid username and password!",
