@@ -1,95 +1,71 @@
+
+
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const app = express();
 app.use(express.json());
-const JWT_SECRET = "Akhil@189709";
+const jwt = require("jsonwebtoken");
+
 const users = [];
+const JWT_SECRET = "Akhil@189709"
 
-app.post("/signup", function (req, res) {
-  const username = req.body.username;
-  const password = req.body.password;
 
-  if (users.find((u) => {
-      users.username === username;
-    })
-  ) {
+
+// Signup route
+app.post("/signup", (req, res) => {
+  const { username, password } = req.body;
+
+  if (users.find((u) => u.username === username)) {
+    res.status(400).json({ msg: "The user already exists!" });
     return;
   }
 
-  users.push({
-    username: username,
-    password: password,
+  users.push({ username, password });
+  res.status(201).json({
+    msg: "You have signed up successfully!"
   });
-  res.json({
-    msg: `you are signed In`,
-  });
-  console.log("users array after the signup");
-  console.log(users);
+  console.log("Users array after signup:", users);
 });
 
+// Signin route
 app.post("/signin", (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
+  const { username, password } = req.body;
 
-  //this logic is to find the user has signedup?
-  let isUser = null;
-  for (let i = 0; i < users.length; i++) {
-    if (users[i].username === username && users[i].password === password) {
-      isUser = users[i];
-    }
-  }
-  // //the above logic is same as below!
-  //   const foundUser = users.find(function (u) {
-  //     if (u.username === username && u.password === password) {
-  //       return true;
-  //     } else {
-  //       return false;
-  //     }
-  //   });
-  // });
-  if (isUser) {
-    const token = jwt.sign(
-      ///creating the jwt using the username! and the secret key given here!
-      {
-        username: username,
-      },
-      JWT_SECRET
-    );
-    res.json({
-      token: token,
-    });
+  const foundUser = users.find(
+    (u) => u.username === username && u.password === password
+  );
+
+  if (foundUser) {
+    const token = jwt.sign({
+      username:username
+    }, JWT_SECRET);
+
+
+    res.json({ token });
   } else {
-    res.status(403).json({
-      msg: "Invalid username and password!",
-    });
+    res.status(403).json({ msg: "Invalid username or password!" });
   }
-  console.log("users array after the signin");
-  console.log(users);
+
+  console.log("Users array after signin:", users);
 });
 
+// Get user details
 app.get("/me", (req, res) => {
-  const token = req.headers.authorization; ///authorization can be modified according to ourselves!
-  const decodedInformation = jwt.verify(token, JWT_SECRET); //this is converting the jwt to the username
-  const username = decodedInformation.username;
+  const token = req.headers.authorization; // Token sent in the Authorization header
+  const decodedInformation = jwt.verify(token,JWT_SECRET)
+  const recievdToken = decodedInformation.token;
+  const foundUser = users.find((u) => u.token === recievdToken);
 
-  let isUser = null;
-  for (let i = 0; i < users.length; i++) {
-    if (users[i].username === username) {
-      isUser = users[i];
-    }
-  }
-  if (isUser) {
+  if (foundUser) {
     res.json({
-      username: isUser.username,
-      password: isUser.password,
+      username: foundUser.username,
+      password: foundUser.password,
     });
   } else {
-    res.json({
-      msg: "sorry the token in invalid",
-    });
+    res.status(401).json({ msg: "Invalid or missing token!" });
   }
 });
 
+// Start the server
 app.listen(3000, () => {
-  console.log("the sever is running on the port 3000");
+  console.log("Server is running on port 3000");
 });

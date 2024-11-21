@@ -1,18 +1,13 @@
 const express = require("express");
-const { tuple } = require("zod");
 const app = express();
 app.use(express.json());
 
 const users = [];
-//[{
-//username: "Akhilkumar",
-// password: "ilovekutkut"
-//}]
 
-///should return the randon long string
+// Generate a random 35-character token
 function generateTokens() {
-  let options = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9",
-  ];
+  const options =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let token = "";
   for (let i = 0; i < 35; i++) {
     token += options[Math.floor(Math.random() * options.length)];
@@ -20,77 +15,56 @@ function generateTokens() {
   return token;
 }
 
-app.post("/signup", function (req, res) {
-  const username = req.body.username;
-  const password = req.body.password;
+// Signup route
+app.post("/signup", (req, res) => {
+  const { username, password } = req.body;
 
-  users.push({
-    username: username,
-    password: password
-  });
-  res.json({
-    msg: `you are signed In`,
-  });
-  console.log("users array after the signup");
-  console.log(users);
-})
-
-app.post("/signin", (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
-
-  //this logic is to find the user
-  let foundUser = null;
-  for (let i = 0; i < users.length; i++) {
-    if (users[i].username === username && users[i].password === password) {
-      foundUser = users[i];
-    }
+  if (users.find((u) => u.username === username)) {
+    res.status(400).json({ msg: "The user already exists!" });
+    return;
   }
-  // //the above logic is same as below!
-  //   const foundUser = users.find(function (u) {
-  //     if (u.username === username && u.password === password) {
-  //       return true;
-  //     } else {
-  //       return false;
-  //     }
-  //   });
-  // });
+
+  users.push({ username, password });
+  res.status(201).json({ msg: "You have signed up successfully!" });
+  console.log("Users array after signup:", users);
+});
+
+// Signin route
+app.post("/signin", (req, res) => {
+  const { username, password } = req.body;
+
+  const foundUser = users.find(
+    (u) => u.username === username && u.password === password
+  );
+
   if (foundUser) {
     const token = generateTokens();
     foundUser.token = token;
-    res.json({
-      token: token,
-    });
+    res.json({ token });
   } else {
-    res.status(403).json({
-      msg:"Invalid username and password!"
-    })
+    res.status(403).json({ msg: "Invalid username or password!" });
   }
-  console.log("users array after the signin");
-  console.log(users);
 
+  console.log("Users array after signin:", users);
 });
 
+// Get user details
 app.get("/me", (req, res) => {
-  const token = req.headers.authorization; ///authorization can be modified according to ourselves!
-  let foundUser = null;
-  for (let i = 0; i < users.length; i++){
-    if (users[i].token === token) {
-      foundUser = users[i]
-    }
-  }
+  const token = req.headers.authorization; // Token sent in the Authorization header
+
+  const foundUser = users.find((u) => u.token === token);
+
   if (foundUser) {
     res.json({
       username: foundUser.username,
-      password:foundUser.password
-    })
+      password: foundUser.password,
+    });
   } else {
-    res.json({
-      msg:"sorry the token in invalid"
-    })
+    res.status(401).json({ msg: "Invalid or missing token!" });
   }
-})
+});
 
+// Start the server
 app.listen(3000, () => {
-  console.log("the server is running on the port 3000");
+  console.log("Server is running on port 3000");
 });
