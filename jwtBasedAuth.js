@@ -39,12 +39,10 @@ app.post("/signin", (req, res) => {
       username:username
     }, JWT_SECRET);
 
-
     res.json({ token });
   } else {
     res.status(403).json({ msg: "Invalid username or password!" });
   }
-
   console.log("Users array after signin:", users);
 });
 
@@ -54,8 +52,8 @@ app.get("/me", (req, res) => {
   const decodedInformation = jwt.verify(token,JWT_SECRET)
   const recievdToken = decodedInformation.token;
   const foundUser = users.find((u) => u.token === recievdToken);
-
-  if (foundUser) {
+  
+  if(foundUser) {
     res.json({
       username: foundUser.username,
       password: foundUser.password,
